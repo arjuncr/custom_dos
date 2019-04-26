@@ -1,0 +1,72 @@
+Description of implementation of shared modules
+	-- 2000/10/29 ska
+
+FreeCOM requires the following actions for modules:
+A1: attach to all already loaded modules,
+A2: preload dummy modules,
+A3: load modules from resource file,
+A4: detach from modules,
+A5: aquire MIB of a specific module, and
+A6: not required, but helpful: aquire the "attach" status of a module.
+
+No module is attached to multiple times. The current implementation
+would need multiple attaches within the same copy of FreeCOM only under
+circumstances of module Stub.
+
+Module Stub provides the space to hold the static context of the resident
+portion of FreeCOM and the stubs to the other modules, esp. Criter and
+CBreak. Insofar, Stub depends on the other modules and the implementation
+would need to multiply attach to some modules.
+
+However, Stub has two different functions within FreeCOM to offer the
+context and to offer the stubs. Now FreeCOM has also two modes accessing
+Stub:
+
+a) when FreeCOM is re-spawned and during the run-time and shutdown of
+FreeCOM, the context is read/written/updated;
+b) during startup of a new copy of FreeCOM, Stub is loaded into memory,
+the context is initialized and the stubs are configured to refer to
+the code shared by the other modules.
+
+That means that during mode "a)" the view FreeCOM has of Stub does not
+depend on any module, but Stub can be considered a stand-alone module.
+
+That leaves the time when a new Stub is created or a Stub is removed.
+In fact, not FreeCOM depends on the dependency of Stub to the other
+modules, but the resident Stub itself. That means that after the other
+modules are loaded into memory, their link count is incremented, what will
+thereafter be interpreted as that two instead of one processes depend on
+these modules. This view is also true, because Stub will represent FreeCOM
+as its resident portion and is by all means of the OS its own, free-standing
+process.
+
+===
+
+Action A1 is required to find all shared modules within memory and to attach
+to them. It also provides the mechanism to attach to the context and find
+the parent's context in order to inherit settings from it.
+In conjunction with A3 this action implements a load-and-attach-to action.
+
+Action A2 is required to install dummy functions required during the
+startup process, when the location of the resource file is not known, thus,
+it is not possible to retreive any missing modules from it.
+
+Action A3 is required in order to provide modules at all. It is accompanied
+A1 to implement the load-and-attach-to action.
+
+Action A4 is required to detach from shared modules, thus, to orderly
+tread the link count of them, and thereby to know when to remove the
+module from memory. A4 includes the action to remove the module from
+memory, which may be more complex than to simply deallocate the memory
+the module is located in.
+
+Action A5 is required to actually access data stored within a module or
+the code of the module.
+
+Action A6 is recommended for optimization purpose, as it is possible to
+skip action A3 if all the modules are already attached to. As it is partially
+implemented within A5, this action is merged with A5.
+
+===
+
+

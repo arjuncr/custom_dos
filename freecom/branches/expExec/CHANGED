@@ -1,0 +1,123 @@
+Update #14 / Beta 29: Direct access to dynamic context
+chg: enhanced editing: prvLine just pointer to history buffer
+bugfix: enhanced cmd line editing: F1 at EOS doesn't display character
+fix: F5 on last line scrolls, but keeps cursor one line above
+bugfix: enhanced editing: without FEATURE_HISTORY keeps one command line
+
+Beta 28 (main branch):
+bugfix: scancmd.c: /B and /A let COPY fail (ec == E_Ignore) (bug 829)
+upd: HTML section
+
+Update #13 / Beta 27: plain dynamic context
+fix: reg str useage: readCommand(), fct_batchname(), getEnv()
+add: chkregStr() debug macro
+fix: ecLastB(): to return 0 if no Batch context was found
+
+Beta 26 (main branch):
+chg: using FLAG for all boolean options (reduce size)
+chg: tmpnam.c: reduced size
+chg: FreeCOM archive (== executable) is opened read-only.
+
+Update #12 / Beta 25: make smaller
+chg: removed int86(), intdos() reduce by 560 bytes
+chg: fixed COPY, reduce by 400 bytes
+bugfix: COPY con file
+bugfix: parseOptions(): If last option is E_ignore --> scanOptions() fails
+bugfix: remove destination file on failure & Stop on ^Break (between
+	the copy of one block)
+
+Update 11 / Beta 24: verification of kernel swap support
+fix: dyn_ctxt never initialized
+chg: gflag_swap: defaults to TRUE
+
+Update 10 / Beta 23: verficiation of flag processing
+add: lflag_ignoreCBreak
+fix: makePipeContext(): Leave trailing '|' for pipe stdout & stderr of 1st cmd
+add: various debug messages
+add: Status (flag) settings during C context
+
+Update #9:
+add: on out-of-memory condition, doCancel is set to drop to prompt
+fix: if read command interactively, but stdin is not connected to the console
+	the normal Fgets() is used in order to avoid that FreeCOM locks;
+	e.g. running: COMMAND <NUL
+	Same behaviour using DOS-0A and <conio.h> functions.
+fix: cmdinput.c: if ECHO OFF && ^C enables prompt --> reset initial curpos
+fix: expEnvVars(): parenthesises may be nested
+fix: using the correct skipQuote*() function
+add: skipQuoteChars(), skipQuoteArg(), skipQuoteStr(), skipquote()
+fix: makePipeContext(): issue error on empty command
+fix: makePipeContext(): Leave trailing '|' for pipe stdout & stderr
+fix: exp_ev.c: call (fct->func) for fct==0 if argument present
+add: pre&post-exec status trace
+add: %* and %@ARGV()
+add: display_exec & display_status commands
+fix: fixstrs.c: maxCnt exceeding MAXSTRINGS
+chg: fixstrs.c: MAXSTRINGS ::= 1024
+
+Update #8:
+add: basic output streaming functions
+add: ctxtGetItem(): fetch a given name from a context
+chg: ctxtGetS(): construct tagged name itself
+fix: makePipeDelTemp(): 2nd ecMkc() missing (char*)0
+fix: makePipeContext(): 1st ecMkiVar() ::= makePipeDelTemp()
+fix: makePipeContext(): last memmove() length 1 too less
+fix: expev.c: p += strlen(verbatim_token)
+fix: ecMkV1C(): Mkvcmd() gets "str"
+fix: ECLenPar(): one paragraphe too large
+
+Update #7:
+fix: skippath(): accepting '.'
+fix: open output redirection: append & overwrite switched
+fix: type in cmdtable.c prevents FD
+fix: get_redirection(): compare with redir[i]
+fix: overwrite mmode in cmdinput.c
+fix: typo: bad_var
+fix: FOR: normmal env var detection screws up varE
+
+Update #6:
+chg: cbreak <-> using doExit/Quit/Cancel, no modes
+chg: CTXT_TAG_EXEC renamed to CTXT_TAG_FLAG
+fix: %@VERBATIM(): uses verbatim & verbatim_token to communicate with
+	expEnvVars()
+fix: cmd_for(): To reset the variable to its previous value must be
+	quoted, e.g. by %@VERBATIM()
+fix: ecShrink(): 2nd validateTOS() is incorrect, because the new TOS header
+	is not initialized so far
+chg: renamed variables for FOR: varname, param, cmd
+fix: ecMkf(): calculation of varname & cmd based on ctxtMain
+fix: forPatchCmdline(): wrong internal <-> external var ident
+fix: ecMkf(): prefix == 0
+fix: readFORfirst(): wrong return value for ecShrink()
+fix: ecMkF(): pre-calculation of length one byte too large
+fix: ecMkF(): missing ES_STRING_DELIM between multiple arguments
+fix: ecMkF(): assert()'s
+fix: cmd_for_hackery(): must strip leading "FOR" keyword
+
+Update #5:
+fix: ecMkc()/ecMkvcmd(): Ignore-Exit commands tagged as normal ones
+fix: ctxtChgSize(): clear environment if newly created
+fix: ARG: wrong operator to pop old arguments
+add: ecPop() & ecMkB(): F(batchlevel)
+add: command.c & batch.c: chkHeap
+fix: docommand(): name free()'ed and realloc()
+fix: qecAction(): no parameter --> no error
+chg: beautify: variable names of command lines ::= 'line' , (full) name
+	of command ::= name, first word ::= first [to ease debugging]
+fix: readbatchline(): 2. dprintf() %ul --> %lu
+fix: readbatchline(): fopen(): text mode
+fix: readbatchline(): echoBatch = 0
+fix: <TAB>: moves cursor behind the replacement text
+fix: expandEnvVar: no free() for %1-style variables
+
+Update #4:
+fix: Re-allocating the environment may clash with Borland's internal heap
+	management and with to allocate the other external memory blocks, when
+	no UMBs are available.
+bugfix: farcoreleft() is a nonsense function, replaced by a function
+	generating the size of the largest allocatable block
+bugfix: dprintf(): bugs in contexts like if() dprintf() else
+chg: core documentation CMT[378].TXT, ICMDS.TXT
+fix: dbg_printmem() if compiled in Large memory model, near is invalid
+
+Initial revision of expExec branch

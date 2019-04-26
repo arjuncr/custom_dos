@@ -1,0 +1,28 @@
+#
+# makefile for device.lib
+#
+# $Id: makefile 1009 2004-07-25 09:55:58Z perditionc $
+#
+
+!include "../mkfiles/generic.mak"
+
+OBJS=floppy.obj rdpcclk.obj wrpcclk.obj wratclk.obj
+LIBOBJS=+floppy +rdpcclk +wrpcclk +wratclk
+
+# Build the LIBRARY ####################################################
+
+all:		..\lib\device.lib
+
+..\lib\device.lib: $(OBJS)
+		-$(RM) $*.lib
+		$(LIBUTIL) $(LIBFLAGS) $* $(LIBOBJS) $(LIBTERM)
+
+$(OBJS):	$(DEPENDS) ../kernel/segs.inc
+
+########################################################################
+
+clean:
+		-$(RM) *.bak *.cod *.crf *.err *.las *.lst *.map *.obj *.xrf
+
+clobber:	clean
+		-$(RM) ..\lib\device.lib status.me

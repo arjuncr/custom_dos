@@ -1,0 +1,240 @@
+$Id: cmt2.txt 248 2001-06-11 21:04:11Z skaus $
+Batch file processing
+
+This document discusses the features and functionality of the
+batch file processing. It does not include help or explanation
+for the batch language itself.
+
+In the following "batch" files and the like are called "scripts"
+or "shell scripts" most of the time; the author assumes that most
+people running DOS/FreeCOM will associate the COMMAND batch language
+with this term.
+
+C> is an icon of the command line prompt an user is to enter commands at.
+It shall only visualize the interactive prompt and _not_ the particular
+drive C:.
+
+A '===' at the first column represents a section header.
+A '==' sourrounds file listings and, sometime, output of programs.
+
+=== Invoking Shell Scripts
+
+Variant 1:
+
+Shell scripts are invoked like any command:
+
+SCRIPT arg1 arg2 arg3 arg4 ... argN <in-file >out-file
+
+The arguments and the I/O redirection directives are optional, of course.
+
+Batch scripts are identified by the extension .BAT, it is currently
+not possible to execute a batch script without this file extension.
+
+In this variant, however, empties the execution context, what means that
+any formerly nested script are "forgotten". In addition, FOR loops are
+destroyed, too.
+
+Variant 2:
+
+In order to nest script they must be invoked via the CALL command:
+
+CALL SCRIPT arg1 arg2 arg3 arg4 ... argN <in-file >out-file
+
+
+The arguments and the I/O redirection directives are optional, again.
+Also, the scripts must have the file extension .BAT.
+
+Unlike to invoke scripts without CALL, the current position within
+the current script is preserved and the execution returns to the next
+command following the CALL command when the CALL'ed script finishes.
+FOR loops are destroyed nonetheless.
+
+EXAMPLE:
+
+== BATCH1.BAT
+echo In Batch1 - arg1 = %1
+== BATCH2.BAT
+@echo off
+call batch1 first
+echo second
+call batch1 third
+==
+
+Invoking script BATCH2 from command line:
+
+C> batch2
+
+would output:
+
+==
+In Batch1 - arg1 = first
+second
+In Batch1 - arg1 = third
+==
+
+Because there is no old execution context on command line, the user may
+invoke script BATCH2 with or without CALL; but if BATCH2.BAT would read:
+== BATCH2a.BAT
+@echo off
+batch1 first
+echo second
+batch1 third
+==
+
+Invoking the modified script BATCH2 from command line:
+
+C> batch2a
+
+would output:
+
+==
+In Batch1 - arg1 = first
+==
+
+Because to invoke a batch script without CALL destroys any former
+execution context, hence, the shell simply forgot where to return to
+when BATCH1.BAT ends.
+
+=== Accessing Arguments
+
+The argument passed to a script are accessable through the automatic
+variables: %1, %2 through %9 (there is no trailing second percent sign).
+Variable %0 returns the name of script in the same way it has been
+written on invokation, e.g.:
+== BATCH.BAT
+echo %0
+==
+
+C> batch
+batch
+C> BATCH
+BATCH
+C> batch.bat
+batch.bat
+C> .\batch.BAT
+.\batch.BAT
+
+Arguments may be separated on command line with: whitespaces, commas,
+semicolons ';' and equal signs '='. There is no known quotation mechanism.
+E.g.:
+== BATCH.BAT
+@echo :%1: :%2: :%3: :%4: :%5: :%6: :%7: :%8: :%9:
+==
+
+C> batch 1 2,3;4=5 6+7
+:1: :2: :3: :4: :5: :6+7: :: :: ::
+
+The tenth and later arguments are not accessable directly; to fetch them
+the command SHIFT must be used. Each SHIFT increments a "shift level" by
+one and when using "%n", it is replaced by the "n + shift_level"'th
+argument, e.g.:
+
+== BATCH.BAT
+echo %0
+SHIFT
+echo %0
+SHIFT
+echo %0
+==
+
+C> batch 1 2 3
+batch
+1
+2
+
+Please note that %0 is effected by SHIFT, too.
+
+There is no upper limit for SHIFT. If "n + shift_level" references to a
+non-existant argument, it is replaced by an empty string, aka by nothing.
+
+=== Noisiness / Echo State / Process Options
+
+There are some batchfile process options that effects the way batchfiles
+are processed, e.g.:
+ECHO -> display the command line before executing it
+TRACE -> prompt if to execute a command line
+SWAP -> swap FreeCOM out of memory during executing the command
+
+All these settings are peristent options: They get a default setting on 
+startup, then they can be changed and keep their setting until a) changed
+again or b) the execution drops to the interactive command line again, in
+which case they get their default setting again.
+
+For instance:
+== BATCH1.BAT
+ECHO
+CALL batch2.bat
+ECHO in batch1
+ECHO
+== BATCH2.BAT
+@ECHO OFF
+ECHO in batch2
+ECHO
+==
+will display:
+C> ECHO
+ECHO is ON
+C> CALL batch2.bat
+in batch2
+ECHO is OFF
+in batch1
+ECHO is OFF
+
+The ECHO state is still "OFF", when the script BATCH2.BAT exits and returns to
+BATCH1.BAT. The first two lines are ECHO'ed.
+The batch language do also include single line modifications of several
+options, such as if '@' prefixes a line, this line is not ECHO'ed, but
+this setting may not effect a called batch file, e.g.:
+== BATCH.BAT
+ECHO
+==
+C> @batch
+should tell that ECHO is ON, although the invocation of BATCH.BAT is not
+ECHO'ed itself.
+
+However, the possibility to control the swapping of FreeCOM is an extension
+to the CALL command and could be interpreted differently in that that
+== BATCH1.BAT
+CALL /S batch2.bat
+prg1.exe
+== BATCH2.BAT
+prg2.exe
+==
+the swapping is enabled for prg2.exe (and the whole BATCH2 script), but no
+longer in BATCH1, thus, to execute prg1.exe FreeCOM would remain in memory.
+To interprete this option is a "local" one, rather than a global one as ECHO
+seems more logical and less incompatible.
+
+Therefore FreeCOM implements a global set of options, which are "currently"
+active, and provides a push/pop mechanism to keep previous versions of the
+them.
+When a batch script is invoked, the current options are pushed and the
+global settings are overwritten by the defaults ones for batch script
+execution. Once the last batch script has terminated, these options are
+poped, thus, automatically resetting the global options by the pushed ones.
+
+So, changes of the global options during execution of a batch script are
+made local for batch scripts, even if one chains from one script to another
+by invoking a script without CALL.
+
+Also, craftly used the push/pop feature can provide the possibilty to
+change such options during a called batch script only, as intended with
+the SWAP option. This might be the basis for 4dos's SETLOCAL command.
+
+Though, if the push/pop feature is used, there is one implicit pop when
+a batch script terminates and if one chains to script, all currently
+active scripts are terminated. So if one calls:
+== BATCH1.BAT
+CALL /S batch2
+prg1.exe
+== BATCH2.BAT
+prg2.exe
+batch3.bat
+== BATCH3.BAT
+prg3.exe
+==
+PRG1.EXE is never invoked, because to chain from BATCH2 to BATCH3 terminates
+both BATCH2 and BATCH1; when invoking PRG2.EXE swapping is enabled; but
+when invoking PRG3.EXE swapping has been resetted to its default value,
+because to terminate BATCH2 and then BATCH1 causes to pop the O-context
+created by CALL /S.

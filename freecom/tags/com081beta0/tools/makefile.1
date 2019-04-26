@@ -1,0 +1,11 @@
+# $Id: makefile.1 130 2001-02-18 21:08:24Z skaus $
+#
+
+all :
+
+clobber : clean
+	$(RM) $(RMFLAGS) *.exe *.com *.icd default.mk
+
+clean :
+	$(RM) $(RMFLAGS) *.lst *.map *.bin *.bak *.las *.obj $(CFG) *.dmp
+

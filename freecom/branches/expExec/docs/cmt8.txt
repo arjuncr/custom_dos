@@ -1,0 +1,58 @@
+$Id: cmt8.txt 248 2001-06-11 21:04:11Z skaus $
+Internal representation of command lines
+	-- 2001/04/26 ska
+
+This document discusses the features and functionality of how
+a command line is represented internally.
+
+== The current implementation works best if all metacharacters are
+   from the lower range 0..127. ==
+
+Certain variants of processing the command line with storing them
+back into an execution context, re-aquire them later, re-processing
+them again, etc. a.s.o. may loose the information about what kind
+of expansion has been already bestowed on certain parts of the command
+line. Therefore the command line will be internally re-formatted to
+hide already quoted characters and allow to embed special characters
+and to embed the command strings into other ones, e.g. to store them
+into the execution contexts.
+
+The basic idea is to move all already parsed metacharacters from the
+normal character set to ones not used normally, because the normal
+command line mostly consits of characters >= ASCI(0x20) only, the
+control characters seem to valunteer for this purpose, though, to
+also embed those ones, the command line is transformed into a
+multi-byte string.
+
+Current meta-characters:
+ASCI(0)..ASCI(32):	whitespaces, argument delimters, ...
+<: input redirection
+>: output redirection
+|: pipes
+%: variable expansion
+,: argument separator
+;: argument separator
+=: argument separator
+": quotation character
+
+All these characters are located in the range 0..127, the lower range
+of a byte.
+
+The multibyte string uses lead characters to introduce multibyte
+characters, all lead characters and all metacharacters are from the
+range ASCI(1)..ASCI(31).
+
+byte	meaning
+\x01	lead byte, clear the highbit of the following character
+\x02	lead byte, set the highbit of the following character     [A]
+
+\x1e	string separator used to delimit strings in exec contexts
+\x1f	pad byte, is removed from output string completely        [B]
+
+[A] This lead byte has been introduced to "quote" characters of
+    the higher range ASCI(128)..ASCI(255); to avoid confusion, the
+    quoted characters already have the high bit set.
+[B] Although this character is removed from the string when it is
+    transformed into a string passed from the parser to the commands,
+    they are characters within the parser, e.g.: a\x1fb effectively
+    delimits the two tokens "a" and "b".
